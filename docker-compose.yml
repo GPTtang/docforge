@@ -1,0 +1,32 @@
+version: '3.8'
+
+services:
+  docling-service:
+    build: ./python-service
+    container_name: docforge-python
+    ports:
+      - "8000:8000"
+    volumes:
+      - model-cache:/root/.cache/docling
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+  docforge-java:
+    build: ./java-service
+    container_name: docforge-java
+    ports:
+      - "8080:8080"
+    environment:
+      - DOCFORGE_PYTHON_SERVICE_URL=http://docling-service:8000
+    depends_on:
+      docling-service:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  model-cache:  # Docling 模型持久化，避免重复下载

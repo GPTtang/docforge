@@ -1,0 +1,11 @@
+docforge:
+  python:
+    service-url: http://localhost:8000
+    connect-timeout: 10000   # 10秒
+    read-timeout: 600000     # 600秒（大文件 / 首次模型加载）
+
+spring:
+  servlet:
+    multipart:
+      max-file-size: 100MB
+      max-request-size: 100MB
