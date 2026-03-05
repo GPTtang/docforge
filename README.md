@@ -49,7 +49,7 @@ Client → Java Spring Boot (port 8080) → Python FastAPI (port 8000) → Markd
 
 ```bash
 # Clone and start all services
-git clone <repo-url>
+git clone https://github.com/GPTtang/docforge.git
 cd docforge
 docker compose up -d
 
@@ -73,7 +73,8 @@ Response:
 {
   "filename": "document.pdf",
   "markdown": "# Introduction\n\n## Section 1\n\nThis is the first paragraph of the document.\n\n## Section 2\n\n| Column A | Column B | Column C |\n|----------|----------|----------|\n| Cell 1   | Cell 2   | Cell 3   |\n| Cell 4   | Cell 5   | Cell 6   |\n",
-  "status": "success"
+  "status": "success",
+  "processing_time_ms": 3500
 }
 ```
 
@@ -97,6 +98,7 @@ This is the first paragraph of the document.
 #### Convert to JSON
 ```bash
 POST http://localhost:8080/api/convert/json
+Content-Type: multipart/form-data
 
 curl -X POST http://localhost:8080/api/convert/json \
   -F "file=@document.docx"
@@ -106,14 +108,32 @@ Response:
 ```json
 {
   "filename": "document.docx",
-  "data": { "title": "...", "sections": [...], "tables": [...] },
-  "status": "success"
+  "data": {
+    "title": "Document Title",
+    "sections": [
+      { "heading": "Section 1", "content": "..." }
+    ],
+    "tables": [
+      { "headers": ["Column A", "Column B"], "rows": [["Cell 1", "Cell 2"]] }
+    ]
+  },
+  "status": "success",
+  "processing_time_ms": 2100
 }
 ```
 
 #### Health Check
 ```bash
 GET http://localhost:8080/api/convert/health
+```
+
+Response:
+```json
+{
+  "status": "ok",
+  "python_service": "reachable",
+  "marker_model_loaded": true
+}
 ```
 
 ### Project Structure
@@ -215,7 +235,7 @@ DocForge 将 Word、Excel、PowerPoint 和 PDF 文件转换为结构化的 Markd
 
 ```bash
 # 克隆仓库并启动所有服务
-git clone <repo-url>
+git clone https://github.com/GPTtang/docforge.git
 cd docforge
 docker compose up -d
 
@@ -239,7 +259,8 @@ curl -X POST http://localhost:8080/api/convert/markdown \
 {
   "filename": "文档.pdf",
   "markdown": "# 简介\n\n## 第一章\n\n这是文档的第一段正文内容。\n\n## 第二章\n\n| 列A | 列B | 列C |\n|-----|-----|-----|\n| 数据1 | 数据2 | 数据3 |\n| 数据4 | 数据5 | 数据6 |\n",
-  "status": "success"
+  "status": "success",
+  "processing_time_ms": 3500
 }
 ```
 
@@ -263,6 +284,7 @@ curl -X POST http://localhost:8080/api/convert/markdown \
 #### 转换为 JSON
 ```bash
 POST http://localhost:8080/api/convert/json
+Content-Type: multipart/form-data
 
 curl -X POST http://localhost:8080/api/convert/json \
   -F "file=@文档.docx"
@@ -272,14 +294,32 @@ curl -X POST http://localhost:8080/api/convert/json \
 ```json
 {
   "filename": "文档.docx",
-  "data": { "title": "...", "sections": [...], "tables": [...] },
-  "status": "success"
+  "data": {
+    "title": "文档标题",
+    "sections": [
+      { "heading": "第一章", "content": "..." }
+    ],
+    "tables": [
+      { "headers": ["列A", "列B"], "rows": [["数据1", "数据2"]] }
+    ]
+  },
+  "status": "success",
+  "processing_time_ms": 2100
 }
 ```
 
 #### 健康检查
 ```bash
 GET http://localhost:8080/api/convert/health
+```
+
+返回示例：
+```json
+{
+  "status": "ok",
+  "python_service": "reachable",
+  "marker_model_loaded": true
+}
 ```
 
 ### 项目结构
@@ -295,11 +335,11 @@ docforge/
 │   └── Dockerfile
 ├── java-service/
 │   ├── src/main/java/com/docforge/
-│   │   ├── controller/              # REST 控制器
-│   │   ├── service/                 # 业务逻辑
-│   │   ├── config/                  # RestTemplate 配置
-│   │   ├── model/                   # 响应模型
-│   │   └── util/                    # 工具类
+│   │   ├── controller/DocForgeController.java
+│   │   ├── service/DocConvertService.java
+│   │   ├── config/RestTemplateConfig.java
+│   │   ├── model/ConvertResponse.java
+│   │   └── util/MultipartInputStreamFileResource.java
 │   ├── pom.xml
 │   └── Dockerfile
 └── docker-compose.yml
@@ -335,169 +375,3 @@ mvn spring-boot:run
 - Marker 模型首次启动加载约需 30 秒，已在服务启动时预加载，请勿每次请求重复加载。
 - Docling 模型文件通过 Docker volume（`model-cache`）持久化，避免重复下载。
 - 文件大于 20 MB 时，建议参考 `format-strategy.md` 中的异步处理方案。
-
----
-
-## 日本語
-
-### 概要
-
-DocForge は Word、Excel、PowerPoint、PDF ファイルを構造化された Markdown または JSON に変換します。二層アーキテクチャを採用しています：
-
-```
-クライアント → Java Spring Boot（ポート 8080）→ Python FastAPI（ポート 8000）→ Markdown / JSON
-```
-
-- **Python サービス**：Docling + Marker エンジンによるドキュメント解析
-- **Java サービス**：Spring Boot REST API（外部向けゲートウェイ）
-
-### 対応フォーマット
-
-| 形式 | 拡張子 | 使用エンジン |
-|------|--------|------------|
-| PDF（テキスト） | `.pdf` | Marker |
-| PDF（スキャン/OCR） | `.pdf` | Docling |
-| Word 文書 | `.docx` `.doc` | Docling |
-| Excel スプレッドシート | `.xlsx` `.xls` | Docling |
-| PowerPoint プレゼン | `.pptx` `.ppt` | Docling |
-
-### ハードウェア要件
-
-| コンポーネント | 最小構成 | 推奨構成 |
-|--------------|---------|---------|
-| CPU | 4 コア | 8 コア以上 |
-| メモリ | 8 GB | 16 GB 以上 |
-| ディスク | 20 GB 空き容量 | 40 GB 以上 |
-| GPU | 不要 | NVIDIA GPU（Marker が 10 倍高速化） |
-
-> **注意：**
-> - Docling・Marker ともに大規模な ML モデルをメモリに読み込みます。メモリ不足の場合、Worker プロセスがクラッシュします。
-> - GPU なしの場合、Marker は CPU 推論にフォールバックするため処理が遅くなります（1 ページあたり約 60 秒）。Marker が失敗した場合、DocForge は自動的に Docling に降格します。
-> - `model-cache` Docker ボリュームにダウンロードされたモデルファイル（約 5 GB）が保存されます。初回起動前に十分なディスク容量を確保してください。
-
-### クイックスタート
-
-**前提条件**：Docker および Docker Compose がインストール済みであること
-
-```bash
-# リポジトリをクローンして全サービスを起動
-git clone <repo-url>
-cd docforge
-docker compose up -d
-
-# ヘルスチェック
-curl http://localhost:8080/api/convert/health
-```
-
-### API リファレンス
-
-#### Markdown に変換
-```bash
-POST http://localhost:8080/api/convert/markdown
-Content-Type: multipart/form-data
-
-curl -X POST http://localhost:8080/api/convert/markdown \
-  -F "file=@document.pdf"
-```
-
-レスポンス例：
-```json
-{
-  "filename": "document.pdf",
-  "markdown": "# はじめに\n\n## 第1章\n\nドキュメントの最初の段落です。\n\n## 第2章\n\n| 列A | 列B | 列C |\n|-----|-----|-----|\n| データ1 | データ2 | データ3 |\n| データ4 | データ5 | データ6 |\n",
-  "status": "success"
-}
-```
-
-`markdown` フィールドには標準的な Markdown テキストが含まれます。レンダリングすると以下のようになります：
-
-```markdown
-# はじめに
-
-## 第1章
-
-ドキュメントの最初の段落です。
-
-## 第2章
-
-| 列A     | 列B     | 列C     |
-|---------|---------|---------|
-| データ1 | データ2 | データ3 |
-| データ4 | データ5 | データ6 |
-```
-
-#### JSON に変換
-```bash
-POST http://localhost:8080/api/convert/json
-
-curl -X POST http://localhost:8080/api/convert/json \
-  -F "file=@document.docx"
-```
-
-レスポンス例：
-```json
-{
-  "filename": "document.docx",
-  "data": { "title": "...", "sections": [...], "tables": [...] },
-  "status": "success"
-}
-```
-
-#### ヘルスチェック
-```bash
-GET http://localhost:8080/api/convert/health
-```
-
-### プロジェクト構成
-
-```
-docforge/
-├── python-service/
-│   ├── main.py                      # FastAPI エントリーポイント
-│   ├── converters/
-│   │   ├── docling_converter.py     # Docling エンジン
-│   │   └── marker_converter.py      # Marker エンジン
-│   ├── requirements.txt
-│   └── Dockerfile
-├── java-service/
-│   ├── src/main/java/com/docforge/
-│   │   ├── controller/              # REST コントローラー
-│   │   ├── service/                 # ビジネスロジック
-│   │   ├── config/                  # RestTemplate 設定
-│   │   ├── model/                   # レスポンスモデル
-│   │   └── util/                    # ユーティリティ
-│   ├── pom.xml
-│   └── Dockerfile
-└── docker-compose.yml
-```
-
-### 設定
-
-`java-service/src/main/resources/application.yml` を編集してください：
-
-```yaml
-docforge:
-  python:
-    service-url: http://localhost:8000
-    connect-timeout: 10000   # 接続タイムアウト：10 秒
-    read-timeout: 120000     # 読み取りタイムアウト：120 秒（大容量ファイル）
-```
-
-### ローカル開発（Docker なし）
-
-```bash
-# Python サービスを起動
-cd python-service
-pip install -r requirements.txt
-uvicorn main:app --reload --host 0.0.0.0 --port 8000
-
-# Java サービスを起動（別ターミナル）
-cd java-service
-mvn spring-boot:run
-```
-
-### 注意事項
-
-- Marker モデルの初回ロードには約 30 秒かかります。サービス起動時に事前ロード済みのため、リクエストごとの再ロードは不要です。
-- Docling モデルファイルは Docker volume（`model-cache`）に永続化されるため、重複ダウンロードを防ぎます。
-- 20 MB を超えるファイルは、`format-strategy.md` に記載されている非同期処理パターンの利用を推奨します。
