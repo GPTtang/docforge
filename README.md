@@ -18,6 +18,7 @@ Client → Java Spring Boot (port 8080) → Python FastAPI (port 8000) → Markd
 
 - **Python service**: Docling + Marker engines for document parsing
 - **Java service**: Spring Boot REST API as the public-facing gateway
+- **Swagger UI**: Interactive API documentation powered by springdoc-openapi
 
 ### Supported Formats
 
@@ -56,6 +57,17 @@ docker compose up -d
 # Check health
 curl http://localhost:8080/api/convert/health
 ```
+
+### Swagger UI
+
+After starting the application, you can access the interactive API documentation:
+
+| URL | Description |
+|-----|-------------|
+| `http://localhost:8080/swagger-ui.html` | Swagger UI - Interactive API documentation |
+| `http://localhost:8080/v3/api-docs` | OpenAPI 3.0 JSON specification |
+
+Swagger UI provides a visual interface to explore and test all API endpoints directly from your browser.
 
 ### API Reference
 
@@ -151,7 +163,9 @@ docforge/
 │   ├── src/main/java/com/docforge/
 │   │   ├── controller/DocForgeController.java
 │   │   ├── service/DocConvertService.java
-│   │   ├── config/RestTemplateConfig.java
+│   │   ├── config/
+│   │   │   ├── RestTemplateConfig.java
+│   │   │   └── SwaggerConfig.java
 │   │   ├── model/ConvertResponse.java
 │   │   └── util/MultipartInputStreamFileResource.java
 │   ├── pom.xml
@@ -204,6 +218,7 @@ DocForge 将 Word、Excel、PowerPoint 和 PDF 文件转换为结构化的 Markd
 
 - **Python 服务**：基于 Docling + Marker 引擎进行文档解析
 - **Java 服务**：Spring Boot REST API，作为对外暴露的网关层
+- **Swagger UI**：基于 springdoc-openapi 的交互式 API 文档
 
 ### 支持的文件格式
 
@@ -242,6 +257,17 @@ docker compose up -d
 # 检查服务状态
 curl http://localhost:8080/api/convert/health
 ```
+
+### Swagger UI
+
+启动应用后，可通过以下地址访问交互式 API 文档：
+
+| 地址 | 说明 |
+|------|------|
+| `http://localhost:8080/swagger-ui.html` | Swagger UI — 交互式 API 文档页面 |
+| `http://localhost:8080/v3/api-docs` | OpenAPI 3.0 JSON 规范文件 |
+
+Swagger UI 提供可视化界面，可直接在浏览器中浏览和测试所有 API 端点。
 
 ### API 接口说明
 
@@ -337,7 +363,9 @@ docforge/
 │   ├── src/main/java/com/docforge/
 │   │   ├── controller/DocForgeController.java
 │   │   ├── service/DocConvertService.java
-│   │   ├── config/RestTemplateConfig.java
+│   │   ├── config/
+│   │   │   ├── RestTemplateConfig.java  # RestTemplate 配置
+│   │   │   └── SwaggerConfig.java       # Swagger OpenAPI 配置
 │   │   ├── model/ConvertResponse.java
 │   │   └── util/MultipartInputStreamFileResource.java
 │   ├── pom.xml
