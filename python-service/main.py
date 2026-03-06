@@ -21,7 +21,7 @@ SUPPORTED_EXTENSIONS = {
 def save_temp_file(file: UploadFile) -> str:
     suffix = Path(file.filename).suffix.lower()
     if suffix not in SUPPORTED_EXTENSIONS:
-        raise HTTPException(400, f"不支持的文件格式: {suffix}")
+        raise HTTPException(400, f"Unsupported file format: {suffix}")
     with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
         tmp.write(file.file.read())
         return tmp.name
@@ -33,12 +33,12 @@ async def convert_to_markdown(file: UploadFile = File(...)):
         tmp_path = save_temp_file(file)
         suffix = Path(file.filename).suffix.lower()
 
-        # PDF 优先用 Marker（排版更好），CPU 环境 Marker 不稳定时自动降级 Docling
+        # For PDFs, prefer Marker (better layout); fall back to Docling if Marker is unstable in CPU environments
         if suffix == ".pdf":
             try:
                 result = marker.to_markdown(tmp_path)
             except Exception as marker_err:
-                logger.warning(f"Marker 转换失败，降级使用 Docling: {marker_err}")
+                logger.warning(f"Marker conversion failed, falling back to Docling: {marker_err}")
                 result = docling.to_markdown(tmp_path)
         else:
             result = docling.to_markdown(tmp_path)
@@ -47,7 +47,7 @@ async def convert_to_markdown(file: UploadFile = File(...)):
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"转换失败: {e}")
+        logger.error(f"Conversion failed: {e}")
         raise HTTPException(500, str(e))
     finally:
         if tmp_path and os.path.exists(tmp_path):
@@ -63,7 +63,7 @@ async def convert_to_json(file: UploadFile = File(...)):
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"转换失败: {e}")
+        logger.error(f"Conversion failed: {e}")
         raise HTTPException(500, str(e))
     finally:
         if tmp_path and os.path.exists(tmp_path):

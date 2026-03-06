@@ -29,4 +29,4 @@ services:
     restart: unless-stopped
 
 volumes:
-  model-cache:  # Docling 模型持久化，避免重复下载
+  model-cache:  # Persist Docling model cache to avoid repeated downloads
