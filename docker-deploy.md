@@ -1,4 +1,4 @@
-# Docker 部署指南
+# Docker Deployment Guide
 
 ## python-service/Dockerfile
 
@@ -7,7 +7,7 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-# 系统依赖（Docling 需要）
+# System dependencies (required by Docling)
 RUN apt-get update && apt-get install -y \
     libgl1-mesa-glx libglib2.0-0 libsm6 libxrender1 libxext6 \
     && rm -rf /var/lib/apt/lists/*
@@ -17,7 +17,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-# 预热模型（构建时下载，避免运行时延迟）
+# Pre-warm model (download at build time to avoid runtime delays)
 RUN python -c "from docling.document_converter import DocumentConverter; DocumentConverter()"
 
 EXPOSE 8000
@@ -73,23 +73,23 @@ services:
     restart: unless-stopped
 
 volumes:
-  model-cache:  # Docling 模型持久化，避免重复下载
+  model-cache:  # Persist Docling model cache to avoid repeated downloads
 ```
 
-## 常用命令
+## Common Commands
 
 ```bash
-# 启动全部服务
+# Start all services
 docker compose up -d
 
-# 查看日志
+# View logs
 docker compose logs -f docling-service
 docker compose logs -f docforge-java
 
-# 重建某个服务
+# Rebuild a specific service
 docker compose up -d --build docling-service
 
-# 测试接口
+# Test the API
 curl -X POST http://localhost:8080/api/convert/markdown \
   -F "file=@test.pdf" | jq '.markdown'
 ```

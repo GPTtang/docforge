@@ -35,7 +35,7 @@ public class DocForgeController {
             @Parameter(description = "Document file to convert (PDF, DOCX, DOC, XLSX, XLS, PPTX, PPT)", required = true)
             @RequestParam("file") MultipartFile file) {
         if (file.isEmpty()) {
-            return ResponseEntity.badRequest().body(error("文件不能为空"));
+            return ResponseEntity.badRequest().body(error("File must not be empty"));
         }
         try {
             String markdown = convertService.convertToMarkdown(file);
@@ -45,7 +45,7 @@ public class DocForgeController {
                 "status", "success"
             ));
         } catch (Exception e) {
-            log.error("Markdown 转换失败: {}", e.getMessage());
+            log.error("Markdown conversion failed: {}", e.getMessage());
             return ResponseEntity.status(500).body(error(e.getMessage()));
         }
     }
@@ -61,7 +61,7 @@ public class DocForgeController {
             @Parameter(description = "Document file to convert (PDF, DOCX, DOC, XLSX, XLS, PPTX, PPT)", required = true)
             @RequestParam("file") MultipartFile file) {
         if (file.isEmpty()) {
-            return ResponseEntity.badRequest().body(error("文件不能为空"));
+            return ResponseEntity.badRequest().body(error("File must not be empty"));
         }
         try {
             Map<String, Object> data = convertService.convertToJson(file);
@@ -71,7 +71,7 @@ public class DocForgeController {
                 "status", "success"
             ));
         } catch (Exception e) {
-            log.error("JSON 转换失败: {}", e.getMessage());
+            log.error("JSON conversion failed: {}", e.getMessage());
             return ResponseEntity.status(500).body(error(e.getMessage()));
         }
     }
