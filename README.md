@@ -20,6 +20,30 @@ Client → Java Spring Boot (port 8080) → Python FastAPI (port 8000) → Markd
 - **Java service**: Spring Boot REST API as the public-facing gateway
 - **Swagger UI**: Interactive API documentation powered by springdoc-openapi
 
+### Document Parsing Engines
+
+DocForge relies on two open-source document parsing engines:
+
+#### Docling
+
+[Docling](https://github.com/DS4SD/docling) is an open-source document parsing library developed by **IBM Research**. It provides advanced document understanding capabilities, converting complex documents into structured data.
+
+- **Supported formats**: PDF, Word (`.docx` / `.doc`), Excel (`.xlsx` / `.xls`), PowerPoint (`.pptx` / `.ppt`)
+- **Key features**: Table extraction, OCR for scanned documents, layout analysis, multi-language support
+- **License**: [MIT License](https://github.com/DS4SD/docling/blob/main/LICENSE) — permissive open-source license allowing commercial use
+- **Repository**: [https://github.com/DS4SD/docling](https://github.com/DS4SD/docling)
+
+#### Marker
+
+[Marker](https://github.com/VikParuchuri/marker) is a high-quality PDF-to-Markdown conversion tool developed by **Vik Paruchuri**. It uses deep learning models to accurately extract text, tables, and formatting from PDF documents.
+
+- **Supported formats**: PDF (`.pdf`)
+- **Key features**: High-accuracy text extraction, table recognition, formula support, superior layout preservation
+- **License**: [GPL-3.0 License](https://github.com/VikParuchuri/marker/blob/master/LICENSE) — open-source license requiring derivative works to also be open-sourced under GPL-3.0
+- **Repository**: [https://github.com/VikParuchuri/marker](https://github.com/VikParuchuri/marker)
+
+> **License Notice**: Marker is licensed under GPL-3.0. If you distribute derivative works based on DocForge that include Marker, you must comply with the GPL-3.0 license terms. For commercial use without GPL obligations, consider using Docling only or contact the Marker author for alternative licensing options.
+
 ### Supported Formats
 
 | Format | Extension | Engine |
@@ -220,6 +244,30 @@ DocForge 将 Word、Excel、PowerPoint 和 PDF 文件转换为结构化的 Markd
 - **Java 服务**：Spring Boot REST API，作为对外暴露的网关层
 - **Swagger UI**：基于 springdoc-openapi 的交互式 API 文档
 
+### 文档解析引擎说明
+
+DocForge 依赖以下两个开源文档解析引擎：
+
+#### Docling
+
+[Docling](https://github.com/DS4SD/docling) 是由 **IBM Research** 开发的开源文档解析库，提供高级文档理解能力，可将复杂文档转换为结构化数据。
+
+- **支持格式**：PDF、Word（`.docx` / `.doc`）、Excel（`.xlsx` / `.xls`）、PowerPoint（`.pptx` / `.ppt`）
+- **核心特性**：表格提取、扫描件 OCR、版面分析、多语言支持
+- **开源许可**：[MIT License](https://github.com/DS4SD/docling/blob/main/LICENSE) — 宽松型开源许可，允许商业使用
+- **项目地址**：[https://github.com/DS4SD/docling](https://github.com/DS4SD/docling)
+
+#### Marker
+
+[Marker](https://github.com/VikParuchuri/marker) 是由 **Vik Paruchuri** 开发的高质量 PDF 转 Markdown 工具，使用深度学习模型从 PDF 文档中精准提取文本、表格和格式。
+
+- **支持格式**：PDF（`.pdf`）
+- **核心特性**：高精度文本提取、表格识别、公式支持、优秀的版面保留
+- **开源许可**：[GPL-3.0 License](https://github.com/VikParuchuri/marker/blob/master/LICENSE) — 开源许可，要求衍生作品同样以 GPL-3.0 开源
+- **项目地址**：[https://github.com/VikParuchuri/marker](https://github.com/VikParuchuri/marker)
+
+> **许可证声明**：Marker 使用 GPL-3.0 许可证。如果您分发包含 Marker 的 DocForge 衍生作品，必须遵守 GPL-3.0 许可证条款。若需在商业项目中使用且不希望受 GPL 约束，可考虑仅使用 Docling 引擎，或联系 Marker 作者获取替代许可。
+
 ### 支持的文件格式
 
 | 格式 | 扩展名 | 使用引擎 |
@@ -403,3 +451,19 @@ mvn spring-boot:run
 - Marker 模型首次启动加载约需 30 秒，已在服务启动时预加载，请勿每次请求重复加载。
 - Docling 模型文件通过 Docker volume（`model-cache`）持久化，避免重复下载。
 - 文件大于 20 MB 时，建议参考 `format-strategy.md` 中的异步处理方案。
+
+---
+
+## Acknowledgements / 致谢
+
+This project is built upon the following outstanding open-source projects:
+
+本项目基于以下优秀的开源项目构建：
+
+| Project | Author | License | Description |
+|---------|--------|---------|-------------|
+| [Docling](https://github.com/DS4SD/docling) | IBM Research | MIT | Document parsing library for PDF, Word, Excel, PowerPoint |
+| [Marker](https://github.com/VikParuchuri/marker) | Vik Paruchuri | GPL-3.0 | High-quality PDF to Markdown converter using deep learning |
+| [Spring Boot](https://github.com/spring-projects/spring-boot) | VMware / Pivotal | Apache-2.0 | Java framework for building production-ready applications |
+| [FastAPI](https://github.com/tiangolo/fastapi) | Sebastián Ramírez | MIT | Modern Python web framework for building APIs |
+| [springdoc-openapi](https://github.com/springdoc/springdoc-openapi) | springdoc | Apache-2.0 | OpenAPI 3.0 documentation for Spring Boot |
