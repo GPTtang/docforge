@@ -88,7 +88,7 @@ After starting the application, you can access the interactive API documentation
 
 | URL | Description |
 |-----|-------------|
-| `http://localhost:8080/swagger-ui.html` | Swagger UI - Interactive API documentation |
+| `http://localhost:8080/swagger-ui/index.html` | Swagger UI - Interactive API documentation |
 | `http://localhost:8080/v3/api-docs` | OpenAPI 3.0 JSON specification |
 
 Swagger UI provides a visual interface to explore and test all API endpoints directly from your browser.
@@ -312,7 +312,7 @@ curl http://localhost:8080/api/convert/health
 
 | 地址 | 说明 |
 |------|------|
-| `http://localhost:8080/swagger-ui.html` | Swagger UI — 交互式 API 文档页面 |
+| `http://localhost:8080/swagger-ui/index.html` | Swagger UI — 交互式 API 文档页面 |
 | `http://localhost:8080/v3/api-docs` | OpenAPI 3.0 JSON 规范文件 |
 
 Swagger UI 提供可视化界面，可直接在浏览器中浏览和测试所有 API 端点。
