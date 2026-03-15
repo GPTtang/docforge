@@ -454,6 +454,77 @@ mvn spring-boot:run
 
 ---
 
+## 日本語
+
+### 概要
+
+DocForge は、Word / Excel / PowerPoint / PDF を構造化された Markdown または JSON に変換するドキュメント変換パイプラインです。
+
+```
+クライアント → Java Spring Boot（8080）→ Python FastAPI（8000）→ Markdown / JSON
+```
+
+- **Python サービス**: Docling + Marker による文書解析
+- **Java サービス**: 外部公開用 REST API ゲートウェイ
+- **Swagger UI**: ブラウザから API を直接試せるドキュメント
+
+### 対応フォーマット
+
+| 種別 | 拡張子 | 変換エンジン |
+|------|--------|-------------|
+| PDF（テキスト） | `.pdf` | Marker（失敗時は Docling へフォールバック） |
+| PDF（スキャン/OCR） | `.pdf` | Docling |
+| Word | `.docx` | Docling |
+| Word（旧形式） | `.doc` | LibreOffice で `.docx` に変換後 Docling |
+| Excel | `.xlsx` | Spreadsheet Converter（openpyxl） |
+| Excel（旧形式） | `.xls` | LibreOffice で `.xlsx` に変換後 openpyxl |
+| PowerPoint | `.pptx` | Docling |
+| PowerPoint（旧形式） | `.ppt` | LibreOffice で `.pptx` に変換後 Docling |
+
+### クイックスタート
+
+前提: Docker / Docker Compose
+
+```bash
+git clone https://github.com/GPTtang/docforge.git
+cd docforge
+docker compose up -d
+
+# ヘルスチェック
+curl http://localhost:8080/api/convert/health
+```
+
+### API
+
+#### Markdown 変換
+```bash
+curl -X POST http://localhost:8080/api/convert/markdown \
+  -F "file=@document.pdf"
+```
+
+#### JSON 変換
+```bash
+curl -X POST http://localhost:8080/api/convert/json \
+  -F "file=@document.docx"
+```
+
+#### 利用可能形式の確認（Python サービス）
+```bash
+curl http://localhost:8000/formats
+```
+
+### Swagger UI
+
+- `http://localhost:8080/swagger-ui/index.html`
+- `http://localhost:8080/v3/api-docs`
+
+### 備考
+
+- 初回起動時はモデル読み込みのため時間がかかる場合があります。
+- `model-cache` ボリュームにモデルを保存するため、再起動時のダウンロードを削減できます。
+- 大きなファイルを処理する場合は、メモリと CPU に余裕のある環境を推奨します。
+
+---
 ## Acknowledgements / 致谢
 
 This project is built upon the following outstanding open-source projects:
