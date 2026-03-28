@@ -1,20 +1,40 @@
-version: '3.8'
-
 services:
   docling-service:
     build: ./python-service
     container_name: docforge-python
-    ports:
-      - "8000:8000"
+    environment:
+      - DOCFORGE_PYTHON_WORKERS=${DOCFORGE_PYTHON_WORKERS:-1}
+      - DOCFORGE_OPENDATALOADER_HYBRID=${DOCFORGE_OPENDATALOADER_HYBRID:-docling-fast}
+      - DOCFORGE_OPENDATALOADER_HYBRID_URL=http://opendataloader-hybrid:5002
+      - DOCFORGE_OPENDATALOADER_HYBRID_MODE=${DOCFORGE_OPENDATALOADER_HYBRID_MODE:-auto}
+    # Port 8000 is intentionally not exposed to the host; route through docforge-java on 8080.
     volumes:
       - model-cache:/root/.cache/docling
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 30s
       timeout: 10s
       retries: 5
-      start_period: 180s
+      start_period: 300s
+
+  opendataloader-hybrid:
+    build: ./python-service
+    container_name: docforge-opendataloader-hybrid
+    command:
+      - sh
+      - -c
+      - exec opendataloader-pdf-hybrid --host 0.0.0.0 --port 5002 ${DOCFORGE_OPENDATALOADER_HYBRID_SERVER_ARGS:-}
+    # Port 5002 is intentionally not exposed to the host; accessed only by docling-service.
+    volumes:
+      - model-cache:/root/.cache/docling
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5002/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 300s
 
   docforge-java:
     build: ./java-service
@@ -27,6 +47,12 @@ services:
       docling-service:
         condition: service_healthy
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/api/convert/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
 
 volumes:
-  model-cache:  # Docling 模型持久化，避免重复下载
+  model-cache:

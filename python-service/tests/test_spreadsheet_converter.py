@@ -35,3 +35,18 @@ def test_markdown_uses_first_row_as_header(tmp_path: Path) -> None:
 
     assert markdown_lines[1] == "| Name | Age |"
     assert markdown_lines[3] == "| Alice | 30 |"
+
+
+def test_markdown_skips_empty_first_row_when_generating_fallback_header(tmp_path: Path) -> None:
+    table = SpreadsheetConverter()._rows_to_markdown_table(
+        ["A", "B"],
+        [
+            [{}, {}],
+            [{"value": "Alice"}, {"value": "30"}],
+        ],
+    )
+
+    markdown_lines = table.splitlines()
+
+    assert markdown_lines[0] == "| A | B |"
+    assert markdown_lines[2] == "| Alice | 30 |"

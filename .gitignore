@@ -1,0 +1,11 @@
+# Benchmark output — contains local file paths, should not be committed
+benchmark-results.json
+
+# macOS
+.DS_Store
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/

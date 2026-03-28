@@ -1,6 +1,7 @@
 package com.docforge.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Data;
 
 @Data
@@ -8,7 +9,7 @@ import lombok.Data;
 public class ConvertResponse {
     private String filename;
     private String markdown;
-    private Object data;       // JSON 模式用
+    private JsonNode data;
     private String status;
     private String message;
 

@@ -102,10 +102,9 @@ class SpreadsheetConverter:
 
         header = [self._render_cell(cell) for cell in padded_rows[0]] if padded_rows else []
         if not any(header):
+            # First row is empty: substitute column letters as the header and skip that row.
             header = [self._escape_md(col or f"Column {i + 1}") for i, col in enumerate(columns or ["" for _ in range(width)])]
-            body = padded_rows
-        else:
-            body = padded_rows[1:] if len(padded_rows) > 1 else []
+        body = padded_rows[1:] if len(padded_rows) > 1 else []
 
         lines = ["| " + " | ".join(header) + " |", "| " + " | ".join(["---"] * width) + " |"]
 

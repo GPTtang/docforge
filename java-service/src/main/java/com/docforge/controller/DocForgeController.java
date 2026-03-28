@@ -76,7 +76,7 @@ public class DocForgeController {
         }
 
         try {
-            Map<String, Object> data = convertService.convertToJson(file);
+            Object data = convertService.convertToJson(file);
             return ResponseEntity.ok(Map.of(
                 "filename", file.getOriginalFilename(),
                 "data", data,

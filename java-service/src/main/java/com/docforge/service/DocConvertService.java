@@ -1,6 +1,9 @@
 package com.docforge.service;
 
+import com.docforge.model.ConvertResponse;
 import com.docforge.util.MultipartInputStreamFileResource;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
@@ -27,23 +30,39 @@ public class DocConvertService {
     private String pythonServiceUrl;
 
     private final RestTemplate restTemplate;
+    private final ObjectMapper objectMapper;
 
-    public DocConvertService(RestTemplate restTemplate) {
+    public DocConvertService(RestTemplate restTemplate, ObjectMapper objectMapper) {
         this.restTemplate = restTemplate;
+        this.objectMapper = objectMapper;
     }
 
     public String convertToMarkdown(MultipartFile file) {
-        return callPythonService(file, "/convert/markdown", "markdown");
+        ConvertResponse response = callPythonService(file, "/convert/markdown");
+        if (response.getMarkdown() == null) {
+            throw new PythonServiceException(
+                HttpStatus.BAD_GATEWAY.value(),
+                "Python service missing field: markdown"
+            );
+        }
+        return response.getMarkdown();
     }
 
-    public Map<String, Object> convertToJson(MultipartFile file) {
-        return callPythonService(file, "/convert/json", "data");
+    public JsonNode convertToJson(MultipartFile file) {
+        ConvertResponse response = callPythonService(file, "/convert/json");
+        if (response.getData() == null || response.getData().isNull()) {
+            throw new PythonServiceException(
+                HttpStatus.BAD_GATEWAY.value(),
+                "Python service missing field: data"
+            );
+        }
+        return response.getData();
     }
 
     public boolean isHealthy() {
         try {
-            ResponseEntity<Map> resp = restTemplate.getForEntity(
-                pythonServiceUrl + "/health", Map.class
+            ResponseEntity<Map<String, Object>> resp = restTemplate.getForEntity(
+                pythonServiceUrl + "/health", (Class<Map<String, Object>>) (Class<?>) Map.class
             );
             return resp.getStatusCode().is2xxSuccessful();
         } catch (Exception e) {
@@ -52,8 +71,7 @@ public class DocConvertService {
         }
     }
 
-    @SuppressWarnings("unchecked")
-    private <T> T callPythonService(MultipartFile file, String path, String field) {
+    private ConvertResponse callPythonService(MultipartFile file, String path) {
         try {
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.MULTIPART_FORM_DATA);
@@ -64,11 +82,11 @@ public class DocConvertService {
             ));
 
             HttpEntity<MultiValueMap<String, Object>> request = new HttpEntity<>(body, headers);
-            ResponseEntity<Map> response = restTemplate.postForEntity(
-                pythonServiceUrl + path, request, Map.class
+            ResponseEntity<ConvertResponse> response = restTemplate.postForEntity(
+                pythonServiceUrl + path, request, ConvertResponse.class
             );
 
-            Map<String, Object> result = response.getBody();
+            ConvertResponse result = response.getBody();
             if (result == null) {
                 throw new PythonServiceException(
                     HttpStatus.BAD_GATEWAY.value(),
@@ -76,22 +94,14 @@ public class DocConvertService {
                 );
             }
 
-            if (!"success".equals(result.get("status"))) {
+            if (!result.isSuccess()) {
                 throw new PythonServiceException(
                     HttpStatus.BAD_GATEWAY.value(),
-                    "Python service error: " + result.getOrDefault("message", "unknown error")
+                    "Python service returned a non-success response"
                 );
             }
 
-            Object payload = result.get(field);
-            if (payload == null) {
-                throw new PythonServiceException(
-                    HttpStatus.BAD_GATEWAY.value(),
-                    "Python service missing field: " + field
-                );
-            }
-
-            return (T) payload;
+            return result;
 
         } catch (HttpStatusCodeException e) {
             throw new PythonServiceException(
@@ -115,13 +125,30 @@ public class DocConvertService {
     }
 
     private String extractDownstreamMessage(HttpStatusCodeException e) {
+        if (e.getStatusCode().is5xxServerError()) {
+            return "Python conversion service failed";
+        }
+
         String body = e.getResponseBodyAsString();
         if (body != null) {
             body = body.trim();
         }
-        if (body != null && !body.isEmpty()) {
-            return body;
+        if (body == null || body.isEmpty()) {
+            return "Python service returned " + e.getStatusCode().value();
         }
-        return "Python service returned " + e.getStatusCode().value();
+
+        try {
+            JsonNode payload = objectMapper.readTree(body);
+            if (payload.hasNonNull("detail")) {
+                return payload.get("detail").asText();
+            }
+            if (payload.hasNonNull("message")) {
+                return payload.get("message").asText();
+            }
+        } catch (IOException ignored) {
+            // Fall back to the raw body for 4xx responses that are already user-facing.
+        }
+
+        return body;
     }
 }

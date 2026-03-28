@@ -19,6 +19,6 @@ public class MultipartInputStreamFileResource extends InputStreamResource {
 
     @Override
     public long contentLength() {
-        return -1; // 不预先计算大小
+        return -1; // Do not pre-calculate size; let the HTTP client use chunked transfer encoding.
     }
 }
